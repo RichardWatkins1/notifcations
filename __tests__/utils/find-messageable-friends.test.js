@@ -1,4 +1,4 @@
-const { findMessageableFriends } = require("../src/utils/find-messageable-friends")
+const { findMessageableFriends } = require("../../src/utils/find-messageable-friends")
 
 const friends = [
   {
