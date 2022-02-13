@@ -1,6 +1,7 @@
 # Notifications
 
-A service which fetches a list for friends, checks if it's their birthday. If it is, wishes them a happy birthday
+A service which currently fetches a list for friends, checks if it's their birthday. If it is, wishes them a happy birthday.
+But could be used as a more generic notification service. Could be used to send sms, slack messages etc.
 
 # Architecture
 
