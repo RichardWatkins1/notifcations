@@ -1,4 +1,4 @@
-const { handler } = require("../src/check-brithdays")
+const { handler } = require("../src/check-friends-birthdays")
 const { v4 } = require("uuid")
 const nock = require("nock")
 const crypto = require("crypto")
@@ -10,6 +10,10 @@ const friendsFile = fs.readFileSync(
   path.join(__dirname, "fixtures", "friends.csv"),
 );
 
+/**
+ * Intercepts http request to s3 and returns valid response
+ */
+
 const s3NockConstructor = (file = friendsFile) => {
   const s3Nock = nock(`https://s3.eu-west-1.amazonaws.com`)
     .get(/.*/)
@@ -18,7 +22,14 @@ const s3NockConstructor = (file = friendsFile) => {
     return s3Nock
 };
 
+/**
+ * Intercepts http request to SQS and returns valid response
+ * pretty horrible but do it right once and reap the benefits everywhere
+ */
+
 const sqsNockConstructor = () => {
+  let sqsBody
+  
   const sqsNock = nock("https://sqs.eu-west-1.amazonaws.com")
     .persist()
     .post("/", (body) => {
@@ -27,7 +38,7 @@ const sqsNockConstructor = () => {
     })
     .reply(
       200,
-      (uri, requestBody) => {
+      (_uri, requestBody) => {
           const body = querystring.parse(requestBody).MessageBody;
           // md5 of message body
           const md5Body = crypto.createHash("md5").update(body).digest("hex");
@@ -46,16 +57,16 @@ const sqsNockConstructor = () => {
       },
       { "Content-Type": "text/xml" }
     );
+
+    const sqsMessage = () => JSON.parse(sqsBody.MessageBody)
   
-  return sqsNock
+  return {
+    sqsNock,
+    sqsMessage
+  }
 }
 
 describe("check birthdays handler", () => {
-  beforeAll(() => {
-    // jest.useFakeTimers()
-    // jest.setSystemTime(new Date("2022-03-20"))
-  });
-
   beforeEach(() => {
     nock.disableNetConnect();
   });
@@ -64,30 +75,45 @@ describe("check birthdays handler", () => {
     nock.cleanAll();
   });
 
-  afterAll(() => {
-    // jest.useRealTimers()
-  });
-
   
   describe("success", () => {
     it("reads friends from s3 if it's their birthday send an SQS message containing their details", async () => {
-      jest.spyOn(global, 'Date').mockImplementation(() => new Date('2022-03-20'));
-
-      const logDate = new Date()
-
-      console.log({logDate})
+      const williamShatnersBirthday = new Date("2000/03/20")
       const s3Nock = s3NockConstructor()
       
-      const sqsNock = sqsNockConstructor()
+      const { sqsNock, sqsMessage} = sqsNockConstructor()
 
-      const response = await handler()
+      const response = await handler({}, williamShatnersBirthday)
 
       expect(response).toEqual({
-        message: "sent notifications"
+        message: "sent 1 notification/s"
       })
 
       expect(s3Nock.isDone()).toEqual(true)
       expect(sqsNock.isDone()).toEqual(true)
+      expect(sqsMessage()).toEqual({
+        contact: "bill.shatner@example.com",
+        dob: "1931/03/20",
+        firstName: "William",
+        lastName: "Shatner",
+        messageType: "email"
+      })
+    })
+
+    it("returns a valid response if their are not friends to message", async () => {
+      const noFriendsHaveThisBirthday = new Date("2000/12/25")
+      const s3Nock = s3NockConstructor()
+      
+      const { sqsNock} = sqsNockConstructor()
+
+      const response = await handler({}, noFriendsHaveThisBirthday)
+
+      expect(response).toEqual({
+        message: "No friends to message today"
+      })
+
+      expect(s3Nock.isDone()).toEqual(true)
+      expect(sqsNock.isDone()).toEqual(false)
     })
   })
 }) 

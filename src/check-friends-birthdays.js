@@ -1,44 +1,52 @@
 'use strict';
 const AWS = require('aws-sdk');
 const csv = require('@fast-csv/parse');
-const {birthdayIsToday} = require("./utils/birthday-is-today")
+const { findMessageableFriends } = require("./utils/find-messageable-friends")
 
 AWS.config.update({region:'eu-west-1'})
 
 const s3 = new AWS.S3();
 const sqs = new AWS.SQS();
 
-module.exports.handler = async (event) => {
+module.exports.handler = async (event, todaysDate = new Date()) => {
 
   console.log("Checking friends birthdays")
 
   try {
 
-    console.log("fetching file from s3")
-
     const friends = await fetchFriends()
 
-    console.log({friends})
+    const messageableFriends = findMessageableFriends(friends, todaysDate)
 
-    const messageableFriends = fetchMessageableFriends(friends)
+    const numberOfMessageableFriends = messageableFriends.length
 
-    console.log({messageableFriends})
+    if (numberOfMessageableFriends > 0) {
+      console.log(`Found ${messageableFriends.length} messageable fiends`)
 
-    await Promise.all(messageableFriends.map(friend => {
-      const QueueUrl = String(process.env.QUEUE_URL)
-      const params = {
-        MessageBody: JSON.stringify(friend),
-        QueueUrl
-      }
+      const responses = await Promise.all(messageableFriends.map(friend => {
+        const QueueUrl = String(process.env.QUEUE_URL)
+        const params = {
+          MessageBody: JSON.stringify(friend),
+          QueueUrl
+        }
 
-      console.log(`sending sqs message quueue ${QueueUrl}`)
+        console.log(`sending SQS message queue ${QueueUrl}`)
 
-      return sqs.sendMessage(params).promise()
-    }))
+        const response = sqs.sendMessage(params).promise()
 
-    return {
-      message: "sent notifications"
-    };
+        console.log("sent message to SQS")
+
+        return response
+      }))
+
+      console.log("send messages to SQS", {responses})
+
+      return {
+        message: `sent ${responses.length} notification/s`
+      };
+    }
+
+    return { message: "No friends to message today"}
 
   } catch(err) {
 
@@ -52,6 +60,8 @@ const fetchFriends = async () => {
     Bucket: process.env.AWS_BUCKET_NAME || "exampleBucket",
     Key: process.env.AWS_BUCKET_KEY || "exampleKey.csv",
   }
+
+  console.log("fetching file from s3")
 
   const s3Response = await s3
     .getObject(params)
@@ -79,10 +89,4 @@ const fetchFriends = async () => {
   console.log("Fetched friends", friends)
 
   return friends
-}
-
-const fetchMessageableFriends = friends => {
-  return friends.filter(friend => {
-    friend && birthdayIsToday(friend.dob)
-  })
 }
