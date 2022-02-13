@@ -31,8 +31,8 @@ provider:
       Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
 
 functions:
-  checkBirthdays:
-    handler: "./src/check-birthdays.handler"
+  checkFriendsBirthdays:
+    handler: "./src/check-friends-birthdays.handler"
     description: "Check friends birthdays daily, if it's someones birthday send an SQS message"
     events:
       - schedule: cron(0 10 * * ? *)

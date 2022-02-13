@@ -9,19 +9,27 @@ module.exports.sendMessage = async (event) => {
 
   console.log("Received event", event)
 
-  try {
-    const { Records: { 0: record } = [] } = event
+  const records = event.Records
 
-    console.log(record)
+  if ( records.length !== 1) {
+    const errMessage = "Only able to process 1 message at a time"
+    console.log(errMessage)
+    throw new Error(errMessage)
+  }
+
+  try {
+    
+    const record = records[0]
 
     const message = JSON.parse(record.body)
 
     switch(message.messageType) {
-      case "sms":
-        await sendSms()
-        console.log("sms response", response)
+      // Add different message types when appropriate
+      // case "sms":
+      //   const response = await sendSms()
+      //   console.log("sms response", response)
       default:
-        console.log("default", message)
+        console.log("Sending Email Via SES", { message })
         const response = await sendEmail(message)
         console.log("ses response", response)
     }
@@ -35,9 +43,6 @@ module.exports.sendMessage = async (event) => {
     console.log("failed to send event", event)
     throw new Error(err)
   }
-
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
 };
 
 const sendEmail = async ({email, firstName}) => {

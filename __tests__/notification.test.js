@@ -23,8 +23,6 @@ const sqsRecordBuilder = body => {
   }
 }
 
-
-
 describe("sendMessage", () => {
   beforeEach(() => {
     nock.disableNetConnect();
@@ -34,27 +32,42 @@ describe("sendMessage", () => {
   });
   
   describe("sending an email", () => {
-    it("sends an email when given a valid payload", async () => {
-      const messageBody = {
-        firstName: "Richard",
-        lastName: "test",
-        dob: "01/01/1990",
-        contact: "test@example.com",
-        messageType: "email"
-      }
-      const sqsEvent = sqsRecordBuilder(messageBody)
-
-      const sesNock = nock("https://email.eu-west-1.amazonaws.com:443")
-      .post("/")
-      .times(1)
-      .reply(200);
-
-      const response = await sendMessage(sqsEvent)
-
-      expect(response).toEqual({
-        message: "sent email notification to Richard test"
+    describe("success", () => {
+      it("sends an email when given a valid payload", async () => {
+        const messageBody = {
+          firstName: "Richard",
+          lastName: "test",
+          dob: "01/01/1990",
+          contact: "test@example.com",
+          messageType: "email"
+        }
+        const sqsEvent = sqsRecordBuilder(messageBody)
+  
+        const sesNock = nock("https://email.eu-west-1.amazonaws.com:443")
+        .post("/")
+        .times(1)
+        .reply(200);
+  
+        const response = await sendMessage(sqsEvent)
+  
+        expect(response).toEqual({
+          message: "sent email notification to Richard test"
+        })
+        expect(sesNock.isDone()).toEqual(true)
       })
-      expect(sesNock.isDone()).toEqual(true)
+    })
+
+    describe("failure", () => {
+      it("throws an error if there are multiple records in the SQS batch", async () => {
+        const invalidSqsEvent = {
+          Records: [
+            {},
+            {}
+          ]
+        }
+  
+        await expect(sendMessage(invalidSqsEvent)).rejects.toThrowError()
+      })
     })
   })
 }) 
