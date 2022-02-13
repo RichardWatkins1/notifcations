@@ -51,15 +51,31 @@ const sqsNockConstructor = () => {
 }
 
 describe("check birthdays handler", () => {
+  beforeAll(() => {
+    // jest.useFakeTimers()
+    // jest.setSystemTime(new Date("2022-03-20"))
+  });
+
   beforeEach(() => {
     nock.disableNetConnect();
   });
+
   afterEach(() => {
     nock.cleanAll();
   });
+
+  afterAll(() => {
+    // jest.useRealTimers()
+  });
+
   
   describe("success", () => {
     it("reads friends from s3 if it's their birthday send an SQS message containing their details", async () => {
+      jest.spyOn(global, 'Date').mockImplementation(() => new Date('2022-03-20'));
+
+      const logDate = new Date()
+
+      console.log({logDate})
       const s3Nock = s3NockConstructor()
       
       const sqsNock = sqsNockConstructor()
@@ -69,8 +85,9 @@ describe("check birthdays handler", () => {
       expect(response).toEqual({
         message: "sent notifications"
       })
-      expect(sqsNock.isDone()).toEqual(true)
+
       expect(s3Nock.isDone()).toEqual(true)
+      expect(sqsNock.isDone()).toEqual(true)
     })
   })
 }) 

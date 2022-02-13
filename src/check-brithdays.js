@@ -1,6 +1,7 @@
 'use strict';
 const AWS = require('aws-sdk');
 const csv = require('@fast-csv/parse');
+const {birthdayIsToday} = require("./utils/birthday-is-today")
 
 AWS.config.update({region:'eu-west-1'})
 
@@ -15,41 +16,21 @@ module.exports.handler = async (event) => {
 
     console.log("fetching file from s3")
 
-    const params = {
-      Bucket: process.env.AWS_BUCKET_NAME || "exampleBucket",
-      Key: process.env.AWS_BUCKET_KEY || "exampleKey.csv",
-    }
+    const friends = await fetchFriends()
 
-    const s3Response = await s3
-      .getObject(params)
-      .promise();
+    console.log({friends})
 
-    const csvString = s3Response.Body.toString("utf-8")
+    const messageableFriends = fetchMessageableFriends(friends)
 
-    let eligibleFriends = []
+    console.log({messageableFriends})
 
-    const stream = csv.parseString(csvString, { headers: true, trim: true });
-    for await (const row of stream) {
-
-      // if today is their birthday push to array
-      const publishabledMesage = {
-        firstName: row.first_name,
-        lastName: row.last_name,
-        dob: row.date_of_birth,
-        contact: row.email,
-        messageType: "email"
-      };
-
-      eligibleFriends.push(publishabledMesage)
-    }
-
-    await Promise.all(eligibleFriends.map(friend => {
+    await Promise.all(messageableFriends.map(friend => {
       const QueueUrl = String(process.env.QUEUE_URL)
       const params = {
         MessageBody: JSON.stringify(friend),
         QueueUrl
       }
-      
+
       console.log(`sending sqs message quueue ${QueueUrl}`)
 
       return sqs.sendMessage(params).promise()
@@ -65,3 +46,43 @@ module.exports.handler = async (event) => {
     throw new Error(err)
   }
 };
+
+const fetchFriends = async () => {
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME || "exampleBucket",
+    Key: process.env.AWS_BUCKET_KEY || "exampleKey.csv",
+  }
+
+  const s3Response = await s3
+    .getObject(params)
+    .promise();
+
+  const csvString = s3Response.Body.toString("utf-8")
+
+  let friends = []
+
+  const stream = csv.parseString(csvString, { headers: true, trim: true });
+
+  for await (const row of stream) {
+
+    const publishabledMesage = {
+      firstName: row.first_name,
+      lastName: row.last_name,
+      dob: row.date_of_birth,
+      contact: row.email,
+      messageType: "email"
+    };
+
+    friends.push(publishabledMesage)
+  }
+
+  console.log("Fetched friends", friends)
+
+  return friends
+}
+
+const fetchMessageableFriends = friends => {
+  return friends.filter(friend => {
+    friend && birthdayIsToday(friend.dob)
+  })
+}
