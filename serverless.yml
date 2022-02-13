@@ -1,15 +1,43 @@
 service: notifcations
 frameworkVersion: '2'
 
+custom:
+  bucketName: friends-birthdays-list
+  bucketKey: friends.csv
+
 provider:
   name: aws
+  lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'dev'}
   runtime: nodejs14.x
   region: eu-west-1
+  environment:
+    AWS_BUCKET_NAME: ${self:custom.bucketName}
+    AWS_BUCKET_KEY: ${self:custom.bucketKey}
+    QUEUE_URL: { Ref: NotificationsQueue } 
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ses:SendEmail
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - sqs:sendMessage
+      Resource:
+        Fn::GetAtt: [NotificationsQueue, Arn]
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+      Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
 
 functions:
+  checkBirthdays:
+    handler: "./src/check-birthdays.handler"
+    description: "Check friends birthdays daily, if it's someones birthday send an SQS message"
+    events:
+      - schedule: cron(0 10 * * ? *)
   notification:
-    handler: "./src/sendMessage.sendMessage"
+    handler: "./src/notification.sendMessage"
     description: "Receives an SQS message and sends on the notification"
     events:
       - sqs:
@@ -30,8 +58,10 @@ resources:
     NotificationsQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${self:provider.stage}-notifications-queue
+        QueueName: ${self:provider.stage}-notifications-queue.fifo
         VisibilityTimeout: 180
+        ContentBasedDeduplication: true
+        FifoQueue: true
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt
             - NotificationsDeadLetterQueue
@@ -41,6 +71,12 @@ resources:
     NotificationsDeadLetterQueue:
       Type: "AWS::SQS::Queue"
       Properties:
-        QueueName: ${self:provider.stage}-notifications-dead-letter-queue
+        QueueName: ${self:provider.stage}-notifications-dead-letter-queue.fifo
+        FifoQueue: true
         VisibilityTimeout: 180
         MessageRetentionPeriod: 1209600
+    
+    Friendss3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}

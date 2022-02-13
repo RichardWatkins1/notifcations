@@ -1,4 +1,4 @@
-const {sendMessage} = require("../src/sendMessage")
+const { sendMessage } = require("../src/notification")
 const { v4 } = require("uuid")
 const nock = require("nock")
 
@@ -39,7 +39,7 @@ describe("sendMessage", () => {
         firstName: "Richard",
         lastName: "test",
         dob: "01/01/1990",
-        email: "test@example.com",
+        contact: "test@example.com",
         messageType: "email"
       }
       const sqsEvent = sqsRecordBuilder(messageBody)
