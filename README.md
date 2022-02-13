@@ -9,8 +9,8 @@ A service which fetches a list for friends, checks if it's their birthday. If it
 # Getting Started
 
 ```
-  git clone https://github.com/RichardWatkins1/notifcations.git
-  cd notifcations
+  git clone https://github.com/RichardWatkins1/notifications.git
+  cd notifications
   yarn
 ```
 
