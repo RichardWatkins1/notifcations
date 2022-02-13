@@ -8,7 +8,7 @@ AWS.config.update({region:'eu-west-1'})
 const s3 = new AWS.S3();
 const sqs = new AWS.SQS();
 
-module.exports.handler = async (event, todaysDate = new Date()) => {
+module.exports.handler = async (_event, todaysDate = new Date()) => {
 
   console.log("Checking friends birthdays")
 
@@ -20,8 +20,9 @@ module.exports.handler = async (event, todaysDate = new Date()) => {
 
     const numberOfMessageableFriends = messageableFriends.length
 
+    console.log(`Found ${numberOfMessageableFriends} messageable fiends`)
+
     if (numberOfMessageableFriends > 0) {
-      console.log(`Found ${messageableFriends.length} messageable fiends`)
 
       const responses = await Promise.all(messageableFriends.map(friend => {
         const QueueUrl = String(process.env.QUEUE_URL)
@@ -57,8 +58,8 @@ module.exports.handler = async (event, todaysDate = new Date()) => {
 
 const fetchFriends = async () => {
   const params = {
-    Bucket: process.env.AWS_BUCKET_NAME || "exampleBucket",
-    Key: process.env.AWS_BUCKET_KEY || "exampleKey.csv",
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: process.env.AWS_BUCKET_KEY,
   }
 
   console.log("fetching file from s3")

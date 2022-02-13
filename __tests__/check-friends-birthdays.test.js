@@ -31,11 +31,11 @@ const sqsNockConstructor = () => {
   let sqsBody
   
   const sqsNock = nock("https://sqs.eu-west-1.amazonaws.com")
-    .persist()
     .post("/", (body) => {
       sqsBody = body;
       return true;
     })
+    .times(1)
     .reply(
       200,
       (_uri, requestBody) => {
@@ -114,6 +114,12 @@ describe("check birthdays handler", () => {
 
       expect(s3Nock.isDone()).toEqual(true)
       expect(sqsNock.isDone()).toEqual(false)
+    })
+  })
+
+  describe("error", () => {
+    it("throws an error if the date provided is not a valid date", async () => {
+      await expect(handler({}, 123)).rejects.toThrowError()
     })
   })
 }) 
