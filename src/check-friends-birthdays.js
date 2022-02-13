@@ -1,7 +1,7 @@
 'use strict';
-const AWS = require('aws-sdk');
 const csv = require('@fast-csv/parse');
 const { findMessageableFriends } = require("./utils/find-messageable-friends")
+const AWS = require('aws-sdk');
 
 AWS.config.update({region:'eu-west-1'})
 

@@ -34,13 +34,12 @@ module.exports.sendMessage = async (event) => {
         console.log("ses response", response)
     }
   
-  
     return {
       message: `sent ${message.messageType} notification to ${message.firstName} ${message.lastName}`
     };
 
   } catch(err) {
-    console.log("failed to send event", event)
+    console.log("failed to send notification", event)
     throw new Error(err)
   }
 };
@@ -58,7 +57,7 @@ const sendEmail = async ({email, firstName}) => {
       },
       Body: {
         Html: {
-          Data: "<h1>Happy birthday, dear <firstName>!</h1>",
+          Data: `<h1>Happy birthday, dear ${firstName}!</h1>`,
           Charset: "utf-8",
         },
       },
@@ -66,8 +65,4 @@ const sendEmail = async ({email, firstName}) => {
   };
   const res = await ses.sendEmail(sendEmailConfig).promise();
   return res
-}
-
-const sendSms = () => {
-  console.log("sending sms")
 }
