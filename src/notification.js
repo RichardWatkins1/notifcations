@@ -7,7 +7,7 @@ const ses = new AWS.SES({apiVersion: '2010-12-01'});
 
 module.exports.handler = async (event) => {
 
-  console.log("Received event", event)
+  console.log("Received event", {event})
 
   const records = event.Records
 
@@ -31,11 +31,15 @@ module.exports.handler = async (event) => {
       default:
         console.log("Sending Email Via SES", { message })
         const response = await sendEmail(message)
-        console.log("ses response", response)
+        console.log("ses response", {response})
     }
+
+    const successMessage = `sent ${message.messageType} notification to ${message.firstName} ${message.lastName}`
+
+    console.log({successMessage})
   
     return {
-      message: `sent ${message.messageType} notification to ${message.firstName} ${message.lastName}`
+      message: successMessage
     };
 
   } catch(err) {
