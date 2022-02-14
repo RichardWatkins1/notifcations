@@ -15,6 +15,9 @@ But could be used as a more generic notification service. Could be used to send 
   yarn
 ```
 
+In order to send emails you must have a verified email address in SES. This can be done through the AWS console.
+Once you have a verified email, it needs setting as an environment variable `VERIFIED_EMAIL` in the severless.yml file.
+
 # Running Specs
 
 ```
