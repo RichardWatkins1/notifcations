@@ -44,11 +44,11 @@ module.exports.handler = async (event) => {
   }
 };
 
-const sendEmail = async ({email, firstName}) => {
+const sendEmail = async ({contact, firstName}) => {
   const sendEmailConfig = {
-    Source: "test@example.com",
+    Source: process.env.VERIFIED_EMAIL || "user@exmaple.com",
     Destination: {
-      ToAddresses: [email],
+      ToAddresses: [contact],
     },
     Message: {
       Subject: {

@@ -15,6 +15,7 @@ provider:
     AWS_BUCKET_NAME: ${self:custom.bucketName}
     AWS_BUCKET_KEY: ${self:custom.bucketKey}
     QUEUE_URL: { Ref: NotificationsQueue } 
+    VERIFIED_EMAIL: "user@example.com"
   iamRoleStatements:
     - Effect: Allow
       Action:
