@@ -58,7 +58,7 @@ const sqsNockConstructor = () => {
       { "Content-Type": "text/xml" }
     );
 
-    const sqsMessage = () => JSON.parse(sqsBody.MessageBody)
+  const sqsMessage = () => JSON.parse(sqsBody.MessageBody)
   
   return {
     sqsNock,

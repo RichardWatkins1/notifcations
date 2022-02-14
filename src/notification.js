@@ -46,7 +46,7 @@ module.exports.handler = async (event) => {
 
 const sendEmail = async ({contact, firstName}) => {
   const sendEmailConfig = {
-    Source: process.env.VERIFIED_EMAIL || "user@exmaple.com",
+    Source: process.env.VERIFIED_EMAIL || "user@example.com",
     Destination: {
       ToAddresses: [contact],
     },
