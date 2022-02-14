@@ -2,6 +2,10 @@ const { handler } = require("../src/notification")
 const { v4 } = require("uuid")
 const nock = require("nock")
 
+/**
+ * Constructs valid sqs payload
+ */
+
 const sqsRecordBuilder = body => {
   return {
     Records: [{
@@ -23,6 +27,10 @@ const sqsRecordBuilder = body => {
   }
 }
 
+/**
+ * Intercepts http request to ses and returns valid response
+ */
+
 const sesNockConstructor = () => {
   let sesBody
 
@@ -36,7 +44,7 @@ const sesNockConstructor = () => {
     .reply(200);
 
   const sesMessage = () => sesBody
-   
+
   return {
     sesNock,
     sesMessage
