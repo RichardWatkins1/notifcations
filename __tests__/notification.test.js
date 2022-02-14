@@ -1,4 +1,4 @@
-const { sendMessage } = require("../src/notification")
+const { handler } = require("../src/notification")
 const { v4 } = require("uuid")
 const nock = require("nock")
 
@@ -48,7 +48,7 @@ describe("sendMessage", () => {
         .times(1)
         .reply(200);
   
-        const response = await sendMessage(sqsEvent)
+        const response = await handler(sqsEvent)
   
         expect(response).toEqual({
           message: "sent email notification to Richard test"
@@ -66,7 +66,7 @@ describe("sendMessage", () => {
           ]
         }
   
-        await expect(sendMessage(invalidSqsEvent)).rejects.toThrowError()
+        await expect(handler(invalidSqsEvent)).rejects.toThrowError()
       })
     })
   })

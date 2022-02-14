@@ -5,7 +5,7 @@ AWS.config.update({region:'eu-west-1'})
 
 const ses = new AWS.SES({apiVersion: '2010-12-01'});
 
-module.exports.sendMessage = async (event) => {
+module.exports.handler = async (event) => {
 
   console.log("Received event", event)
 

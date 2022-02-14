@@ -83,7 +83,7 @@ describe("check birthdays handler", () => {
       
       const { sqsNock, sqsMessage} = sqsNockConstructor()
 
-      const response = await handler({}, williamShatnersBirthday)
+      const response = await handler({}, {}, () => undefined, williamShatnersBirthday)
 
       expect(response).toEqual({
         message: "sent 1 notification/s"
@@ -106,7 +106,7 @@ describe("check birthdays handler", () => {
       
       const { sqsNock} = sqsNockConstructor()
 
-      const response = await handler({}, noFriendsHaveThisBirthday)
+      const response = await handler({}, {}, () => undefined, noFriendsHaveThisBirthday)
 
       expect(response).toEqual({
         message: "No friends to message today"
@@ -119,7 +119,8 @@ describe("check birthdays handler", () => {
 
   describe("error", () => {
     it("throws an error if the date provided is not a valid date", async () => {
-      await expect(handler({}, 123)).rejects.toThrowError()
+      const invalidDate = 123
+      await expect(handler({}, {}, () => undefined, invalidDate)).rejects.toThrowError()
     })
   })
 }) 

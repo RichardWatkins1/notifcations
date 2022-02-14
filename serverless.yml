@@ -37,7 +37,7 @@ functions:
     events:
       - schedule: cron(0 10 * * ? *)
   notification:
-    handler: "./src/notification.sendMessage"
+    handler: "./src/notification.handler"
     description: "Receives an SQS message and sends on the notification"
     events:
       - sqs:

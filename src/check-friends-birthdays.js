@@ -8,8 +8,7 @@ AWS.config.update({region:'eu-west-1'})
 const s3 = new AWS.S3();
 const sqs = new AWS.SQS();
 
-module.exports.handler = async (_event, todaysDate = new Date()) => {
-
+module.exports.handler = async (_event, _context, _callback, todaysDate = new Date()) => {
   console.log("Checking friends birthdays")
 
   try {
@@ -26,16 +25,18 @@ module.exports.handler = async (_event, todaysDate = new Date()) => {
 
       const responses = await Promise.all(messageableFriends.map(friend => {
         const QueueUrl = String(process.env.QUEUE_URL)
+
         const params = {
           MessageBody: JSON.stringify(friend),
-          QueueUrl
+          QueueUrl,
+          MessageGroupId: friend.contact
         }
 
         console.log(`sending SQS message queue ${QueueUrl}`)
 
         const response = sqs.sendMessage(params).promise()
 
-        console.log("sent message to SQS")
+        console.log(`sent message to SQS for friend: ${friend.contact}`)
 
         return response
       }))
